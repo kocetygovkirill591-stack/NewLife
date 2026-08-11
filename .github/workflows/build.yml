@@ -28,7 +28,7 @@ jobs:
           echo "Найден ZIP: $ZIP_FILE"
 
           mkdir -p extracted
-          unzip -q "$ZIP_FILE" -d extracted
+          unzip -q NovayaZhizn_GitHub_AutoBuild_v1.2.zip -d extracted
 
           echo "Распаковка завершена"
           find extracted -maxdepth 3 -type f | head -100
