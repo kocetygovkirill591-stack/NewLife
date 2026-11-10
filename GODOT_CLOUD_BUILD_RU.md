@@ -4,7 +4,7 @@
 
 ## Состояние
 
-Ветка содержит отдельный workflow для Godot 4.3. Основная ветка `main` не изменялась: старый Android/Gradle workflow сохранён.
+Ветка содержит отдельный workflow для Godot 4.3 с установкой Android SDK Platform 34, Build Tools 34.0.0, NDK r23c и CMake 3.10.2.4988404. Основная ветка `main` не изменялась: старый Android/Gradle workflow сохранён.
 
 ## Как запустить с телефона
 
