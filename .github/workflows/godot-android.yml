@@ -1,12 +1,7 @@
-"name: Новая Жизнь — Android Debug APK
+name: Новая Жизнь — Android Debug APK
 
 "on":
   workflow_dispatch:
-  push:
-    branches:
-      - godot-v0.3.1-cloud-build
-    paths:
-      - NewLife_V0_3_1_CloudBuild.zip
 
 permissions:
   contents: read
