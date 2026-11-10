@@ -10,7 +10,7 @@ jobs:
   build-android:
     name: Import and export Android APK
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 45
     container:
       image: barichello/godot-ci:4.3
 
@@ -38,6 +38,14 @@ jobs:
           godot --version
           java -version
           test -f /root/debug.keystore
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses >/dev/null 2>&1 || true
+          sdkmanager --sdk_root="$ANDROID_HOME" \
+            "platform-tools" \
+            "build-tools;34.0.0" \
+            "platforms;android-34" \
+            "cmake;3.10.2.4988404" \
+            "ndk;23.2.8568313"
 
       - name: Extract project archive
         shell: bash
