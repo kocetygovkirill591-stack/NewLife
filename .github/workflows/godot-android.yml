@@ -7,7 +7,6 @@
       - godot-v0.3.1-cloud-build
     paths:
       - NewLife_V0_3_1_CloudBuild.zip
-      - .github/workflows/godot-android.yml
 
 permissions:
   contents: read
