@@ -1,0 +1,86 @@
+"name: Новая Жизнь — Android Debug APK
+
+"on":
+  workflow_dispatch:
+  push:
+    branches:
+      - godot-v0.3.1-cloud-build
+    paths:
+      - NewLife_V0_3_1_CloudBuild.zip
+      - .github/workflows/godot-android.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Import and export Android APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    container:
+      image: barichello/godot-ci:4.3
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Prepare Godot 4.3 Android environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.config" "$HOME/.local/share/godot/export_templates"
+          if [ "$HOME" != "/root" ]; then
+            if [ -d /root/.config/godot ]; then
+              mkdir -p "$HOME/.config/godot"
+              cp -a /root/.config/godot/. "$HOME/.config/godot/"
+            fi
+            if [ -d /root/.local/share/godot/export_templates/4.3.stable ]; then
+              mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
+              cp -a /root/.local/share/godot/export_templates/4.3.stable/. "$HOME/.local/share/godot/export_templates/4.3.stable/"
+            fi
+          fi
+          godot --version
+          java -version
+          test -f /root/debug.keystore
+
+      - name: Extract project archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          ARCHIVE="$GITHUB_WORKSPACE/NewLife_V0_3_1_CloudBuild.zip"
+          test -s "$ARCHIVE" || { echo "Не найден архив $ARCHIVE"; exit 1; }
+          rm -rf "$GITHUB_WORKSPACE/extracted"
+          mkdir -p "$GITHUB_WORKSPACE/extracted"
+          unzip -q "$ARCHIVE" -d "$GITHUB_WORKSPACE/extracted"
+          PROJECT_FILE="$(find "$GITHUB_WORKSPACE/extracted" -maxdepth 4 -type f -name project.godot -print -quit)"
+          test -n "$PROJECT_FILE" || { echo "В архиве не найден project.godot"; exit 1; }
+          PROJECT_DIR="$(dirname "$PROJECT_FILE")"
+          test -f "$PROJECT_DIR/export_presets.cfg" || { echo "Не найден export_presets.cfg"; exit 1; }
+          grep -q 'name="Android Debug"' "$PROJECT_DIR/export_presets.cfg" || { echo "Не найден preset Android Debug"; exit 1; }
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Проект найден: $PROJECT_DIR"
+
+      - name: Godot import / script validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          godot --headless --path "$PROJECT_DIR" --editor --quit
+
+      - name: Export Android APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/build/android"
+          godot --headless --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.1-debug.apk"
+          test -s "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.1-debug.apk"
+          ls -lh "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.1-debug.apk"
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NewLife-Android-Debug-APK
+          path: build/android/NewLife-V0.3.1-debug.apk
+          if-no-files-found: error
+          retention-days: 14
