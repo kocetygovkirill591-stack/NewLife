@@ -10,7 +10,7 @@
 
 1. Скачайте отдельный архив `NewLife_V0_3_1_CloudBuild.zip` из чата.
 2. Загрузите его в корень данной ветки без переименования и распаковки.
-3. Загрузка ZIP автоматически запустит workflow. Либо откройте Actions → «Новая Жизнь — Android Debug APK» → Run workflow.
+3. После загрузки ZIP откройте Actions → «Новая Жизнь — Android Debug APK» → Run workflow.
 4. После успешного запуска откройте Artifacts и скачайте `NewLife-Android-Debug-APK`.
 5. Распакуйте artifact ZIP и установите APK на Samsung Galaxy S24.
 
