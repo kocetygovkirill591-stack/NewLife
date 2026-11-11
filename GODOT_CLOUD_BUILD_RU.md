@@ -2,26 +2,46 @@
 
 Ветка: `godot-v0.3.1-cloud-build`
 
-## Состояние
+## Актуальное состояние на 11.11.2026
 
-Ветка содержит отдельный workflow для Godot 4.3 с установкой Android SDK Platform 34, Build Tools 34.0.0, NDK r23c и CMake 3.10.2.4988404. Основная ветка `main` не изменялась: старый Android/Gradle workflow сохранён.
+- Основная ветка `main` не изменялась.
+- Ветка Godot содержит workflow `.github/workflows/godot-android.yml` и инструкцию.
+- В корне ветки сейчас лежит `NovayaZhizn_GitHub_AutoBuild_v1.2.zip`. Проверка состава показала, что это старый Android/Gradle-проект: внутри есть `build.gradle`, `app/build.gradle`, `AndroidManifest.xml` и `MainActivity.java`. Это **не** проект Godot.
+- Архив `NewLife_V0_3_1_CloudBuild.zip`, который нужен для текущего прототипа, в ветке пока отсутствует. Поэтому APK ещё не собран.
 
-## Как запустить с телефона
+## Какой архив загрузить
 
-1. Скачайте отдельный архив `NewLife_V0_3_1_CloudBuild.zip` из чата.
-2. Загрузите его в корень данной ветки без переименования и распаковки.
-3. После загрузки ZIP откройте Actions → «Новая Жизнь — Android Debug APK» → Run workflow.
-4. После успешного запуска откройте Artifacts и скачайте `NewLife-Android-Debug-APK`.
-5. Распакуйте artifact ZIP и установите APK на Samsung Galaxy S24.
+Скачайте из чата один из двух архивов:
+- `NewLife_V0_3_1_CloudBuild.zip` — предпочтительный вариант;
+- `NewLife_V0_4_CloudBuild_Kit.zip` — полный комплект, тоже поддерживается workflow.
 
-## Что делает workflow
+Загрузите ZIP **в корень** ветки `godot-v0.3.1-cloud-build`, не распаковывая и не переименовывая. Не используйте `NovayaZhizn_GitHub_AutoBuild_v1.2.zip`: это другой, старый Gradle-проект.
 
-- Использует контейнер `barichello/godot-ci:4.3` с Godot, Android SDK, JDK 17 и debug keystore.
-- Распаковывает архив проекта.
-- Запускает headless import Godot для проверки ресурсов и GDScript.
-- Экспортирует Android Debug APK для arm64-v8a.
-- Публикует APK как artifact на 14 дней.
+## Запуск с телефона
 
-## Важно
+1. Откройте [ветку Godot](https://github.com/kocetygovkirill591-stack/NewLife/tree/godot-v0.3.1-cloud-build).
+2. Нажмите **Add file → Upload files**, загрузите правильный ZIP в корень и сохраните commit в эту же ветку.
+3. Откройте [GitHub Actions](https://github.com/kocetygovkirill591-stack/NewLife/actions).
+4. Выберите **«Новая Жизнь — Android Debug APK»** → **Run workflow**.
+5. Выберите ветку `godot-v0.3.1-cloud-build`.
+6. После успешного запуска откройте **Artifacts** и скачайте `NewLife-Android-Debug-APK`.
+7. Распакуйте artifact ZIP и установите APK на Samsung Galaxy S24.
 
-Это debug APK для установки и проверки, не релиз Google Play. Release keystore и пароли не добавляются в репозиторий. APK ещё не собран: сборка начнётся только после загрузки ZIP в эту ветку.
+## Что проверяет обновлённый workflow
+
+- Версию Godot 4.3, Java и наличие debug-keystore.
+- Наличие именно Godot-архива, `project.godot`, Android export preset, главной сцены, скрипта и двух игровых изображений.
+- Импорт ресурсов и ошибки GDScript.
+- Короткий headless-запуск главной сцены.
+- Экспорт подписанного **Debug APK** для `arm64-v8a` и целостность APK-архива.
+- Публикацию APK как artifact на 14 дней.
+
+Workflow запускается вручную, чтобы случайная загрузка старого Gradle ZIP не создавала бесполезные сборки. Если правильный архив отсутствует, журнал теперь явно укажет, какой файл найден и какой нужно загрузить.
+
+## История неудачных запусков
+
+Три ранних запуска workflow от 10.11.2026 завершились с `failure`, без созданных jobs и без artifacts. В исходной версии YAML этих коммитов была лишняя кавычка перед `name:`. В текущем коммите эта ошибка исправлена; обновлённый workflow пока не запускался, потому что правильный Godot ZIP ещё не загружен.
+
+## Ограничения
+
+Это тестовая Debug-сборка, не релиз для Google Play. Debug-keystore не предназначен для публикации или гарантированного обновления приложения, подписанного другим ключом. APK не считается проверенным на Samsung Galaxy S24, пока его не установят и не запустят на устройстве.
