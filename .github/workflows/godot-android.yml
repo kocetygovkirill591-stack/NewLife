@@ -137,15 +137,15 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH=/root/debug.keystore \
           GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey \
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android \
-            godot --headless --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.1-debug.apk"
-          test -s "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.1-debug.apk"
-          unzip -t "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.1-debug.apk" >/dev/null
-          ls -lh "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.1-debug.apk"
+            godot --headless --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.2-debug.apk"
+          test -s "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.2-debug.apk"
+          unzip -t "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.2-debug.apk" >/dev/null
+          ls -lh "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.2-debug.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: NewLife-Android-Debug-APK
-          path: build/android/NewLife-V0.3.1-debug.apk
+          path: build/android/NewLife-V0.3.2-debug.apk
           if-no-files-found: error
           retention-days: 14
