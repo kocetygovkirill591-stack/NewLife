@@ -26,6 +26,7 @@ jobs:
           set -euo pipefail
           ARCHIVE=""
           for candidate in \
+            "NewLife_V0_3_3_Safe_Save.zip" \
             "NewLife_V0_3_1_CloudBuild.zip" \
             "NewLife_V0_4_CloudBuild_Kit.zip"; do
             if [ -s "$GITHUB_WORKSPACE/$candidate" ]; then
@@ -36,10 +37,10 @@ jobs:
 
           if [ -z "$ARCHIVE" ]; then
             if [ -s "$GITHUB_WORKSPACE/NovayaZhizn_GitHub_AutoBuild_v1.2.zip" ]; then
-              echo "::error title=Неверный архив::Найден NovayaZhizn_GitHub_AutoBuild_v1.2.zip — это старый Android/Gradle-проект, а не Godot-проект. Загрузите NewLife_V0_3_1_CloudBuild.zip из чата."
+              echo "::error title=Неверный архив::Найден NovayaZhizn_GitHub_AutoBuild_v1.2.zip — это старый Android/Gradle-проект, а не Godot-проект. Загрузите NewLife_V0_3_3_Safe_Save.zip из чата."
               unzip -Z1 "$GITHUB_WORKSPACE/NovayaZhizn_GitHub_AutoBuild_v1.2.zip" | sed -n '1,18p'
             else
-              echo "::error title=Нет исходников Godot::В корне ветки нужен NewLife_V0_3_1_CloudBuild.zip или NewLife_V0_4_CloudBuild_Kit.zip."
+              echo "::error title=Нет исходников Godot::В корне ветки нужен NewLife_V0_3_3_Safe_Save.zip, NewLife_V0_3_1_CloudBuild.zip или NewLife_V0_4_CloudBuild_Kit.zip."
             fi
             exit 1
           fi
@@ -137,7 +138,7 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH=/root/debug.keystore \
           GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey \
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android \
-            godot --headless --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.2-debug.apk"
+            godot --headless --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk"
           test -s "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.2-debug.apk"
           unzip -t "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.2-debug.apk" >/dev/null
           ls -lh "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.2-debug.apk"
@@ -145,7 +146,7 @@ jobs:
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NewLife-Android-Debug-APK
+          name: NewLife-Android-Debug-APK-V0.3.3
           path: build/android/NewLife-V0.3.2-debug.apk
           if-no-files-found: error
           retention-days: 14
