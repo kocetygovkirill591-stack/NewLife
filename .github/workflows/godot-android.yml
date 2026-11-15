@@ -151,7 +151,7 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH=/root/debug.keystore \
           GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey \
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android \
-            godot --headless --path "$PROJECT_DIR" --export-debug --verbose "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk"
+            godot --headless --verbose --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk"
           test -s "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk"
           unzip -t "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk" >/dev/null
           ls -lh "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk"
