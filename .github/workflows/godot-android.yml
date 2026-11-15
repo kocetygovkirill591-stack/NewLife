@@ -1,6 +1,13 @@
 name: Новая Жизнь — Android Debug APK
 
 "on":
+  push:
+    branches:
+      - godot-v0.3.3-source-build
+    paths:
+      - ".github/workflows/godot-android.yml"
+      - ".github/source/**"
+      - "godot-project/**"
   workflow_dispatch:
 
 permissions:
@@ -44,7 +51,12 @@ jobs:
           print(f"Restored main.gd: {len(script)} bytes")
           PY
 
-          for required in             "scripts/main.gd"             "scenes/Main.tscn"             "assets/city_map.svg"             "assets/apartment.svg"             "export_presets.cfg"; do
+          for required in \
+            "scripts/main.gd" \
+            "scenes/Main.tscn" \
+            "assets/city_map.svg" \
+            "assets/apartment.svg" \
+            "export_presets.cfg"; do
             test -s "$PROJECT_DIR/$required" || { echo "::error::В Godot-проекте отсутствует $required"; exit 1; }
           done
           grep -q 'name="Android Debug"' "$PROJECT_DIR/export_presets.cfg" || { echo "::error::Не найден preset Android Debug"; exit 1; }
