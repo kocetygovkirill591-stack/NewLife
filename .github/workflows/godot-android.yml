@@ -156,6 +156,13 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/build/android"
+          LOCAL_PRESET="$RUNNER_TEMP/export_presets.local.cfg"
+          cp "$PROJECT_DIR/export_presets.cfg" "$LOCAL_PRESET"
+          restore_preset() { cp "$LOCAL_PRESET" "$PROJECT_DIR/export_presets.cfg"; }
+          trap restore_preset EXIT
+          sed "s|__HOME__|$HOME|g" "$GITHUB_WORKSPACE/.github/source/export_presets.ci.cfg" > "$PROJECT_DIR/export_presets.cfg"
+          grep -q 'keystore/debug="/root/debug.keystore"' "$PROJECT_DIR/export_presets.cfg"
+          grep -q 'custom_template/debug=' "$PROJECT_DIR/export_presets.cfg"
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH=/root/debug.keystore \
           GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey \
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android \
