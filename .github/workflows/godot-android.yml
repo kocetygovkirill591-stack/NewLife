@@ -37,6 +37,7 @@ jobs:
           SOURCE_B64="$GITHUB_WORKSPACE/.github/source/main.gd.gz.b64"
           test -s "$PROJECT_DIR/project.godot" || { echo "::error::Не найден godot-project/project.godot"; exit 1; }
           test -s "$SOURCE_B64" || { echo "::error::Не найден сжатый GDScript .github/source/main.gd.gz.b64"; exit 1; }
+          test -s "$GITHUB_WORKSPACE/.github/source/export_presets.ci.cfg" || { echo "::error::Не найден CI Android Export Preset"; exit 1; }
 
           mkdir -p "$PROJECT_DIR/scripts"
           base64 --decode "$SOURCE_B64" | gzip --decompress --stdout > "$PROJECT_DIR/scripts/main.gd"
