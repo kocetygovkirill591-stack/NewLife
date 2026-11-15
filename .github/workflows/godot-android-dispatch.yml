@@ -1,0 +1,12 @@
+name: Новая Жизнь — запустить сборку Godot APK
+
+"on":
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-godot:
+    name: Build Godot project from source branch
+    uses: kocetygovkirill591-stack/NewLife/.github/workflows/godot-android.yml@godot-v0.3.3-source-build
