@@ -9,6 +9,7 @@ name: Новая Жизнь — Android Debug APK
       - ".github/source/**"
       - "godot-project/**"
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -22,9 +23,10 @@ jobs:
       image: barichello/godot-ci:4.3
 
     steps:
-      - name: Checkout repository
+      - name: Checkout Godot source branch
         uses: actions/checkout@v4
         with:
+          ref: godot-v0.3.3-source-build
           lfs: true
 
       - name: Restore Godot source and verify project
