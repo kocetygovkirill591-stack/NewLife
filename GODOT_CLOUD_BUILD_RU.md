@@ -1,25 +1,25 @@
 # Облачная сборка Godot APK — «Новая Жизнь»
 
-Актуальная ветка исходников: `godot-v0.3.3-source-build`  
-Ручной запуск: workflow в основной ветке `.github/workflows/godot-android-dispatch.yml`.
+Актуальная ветка исходников: `godot-v0.3.3-source-build`.  
+Ручной запуск: `.github/workflows/godot-android-dispatch.yml` в основной ветке `main`.
 
-## Что изменилось
+## Текущее устройство проекта
 
-Раньше сборка ожидала бинарный ZIP, который нельзя было загрузить в репозиторий через доступный текстовый GitHub-коннектор. Теперь исходники проекта находятся непосредственно в ветке:
+Исходники находятся в GitHub напрямую, без необходимости загружать бинарный ZIP:
 - `godot-project/project.godot`
 - `godot-project/scenes/Main.tscn`
 - `godot-project/export_presets.cfg`
 - `godot-project/assets/city_map.svg`
 - `godot-project/assets/apartment.svg`
-- сжатый GDScript: `.github/source/main.gd.bz2.b64`
+- сжатый GDScript: `.github/source/main.gd.gz.b64`
 
-Workflow восстанавливает обычный `godot-project/scripts/main.gd` перед запуском Godot. Игровая логика V0.3.3 сохранена; ссылки на две иллюстрации заменены с PNG на SVG. После сборки публикуются два отдельных артефакта: APK и редактируемый ZIP проекта.
+Workflow восстанавливает обычный `godot-project/scripts/main.gd` стандартными командами `base64` и `gzip` до запуска Godot. Игровая логика V0.3.3 сохранена; PNG-иллюстрации в source mirror заменены SVG-вариантами. После сборки публикуются APK и ZIP с редактируемым проектом.
 
 ## Запуск с телефона
 
 1. Откройте [ручной запуск Godot APK](https://github.com/kocetygovkirill591-stack/NewLife/actions/workflows/godot-android-dispatch.yml).
 2. Нажмите **Run workflow**.
-3. Оставьте ветку `main` — это только диспетчер. Он вызывает сборку исходников из `godot-v0.3.3-source-build`.
+3. Оставьте ветку `main`: это только диспетчер. Он вызывает сборку из `godot-v0.3.3-source-build`.
 4. Дождитесь окончания задания.
 5. В завершённом запуске откройте **Artifacts**:
    - `NewLife-Android-Debug-APK-V0.3.3` — APK для установки;
@@ -27,24 +27,23 @@ Workflow восстанавливает обычный `godot-project/scripts/ma
 
 APK предназначен для Android ARM64 и подписывается тестовым debug-ключом. Это не релиз для Google Play.
 
-## Что делает workflow
+## Этапы сборки
 
-1. Проверяет и декодирует сжатый GDScript.
-2. Проверяет наличие сцены, ресурсов и Android Export Preset.
-3. Запускает импорт ресурсов в Godot 4.3 headless.
-4. Выполняет короткий headless smoke test главной сцены.
-5. Экспортирует APK `NewLife-V0.3.3-debug.apk`.
-6. Проверяет целостность APK и ZIP исходников.
-7. Публикует APK и исходный проект как artifacts на 14 дней.
+1. Восстановление GDScript из gzip/base64.
+2. Проверка сцены, ресурсов и Android Export Preset.
+3. Импорт ресурсов в Godot 4.3 headless.
+4. Короткий headless smoke test главной сцены.
+5. Экспорт `NewLife-V0.3.3-debug.apk`.
+6. Проверка APK и ZIP проекта.
+7. Публикация двух artifacts на 14 дней.
 
-## Ограничения и честный статус
+## Почему ручной запуск находится в main
 
-- Наличие исходников и workflow в GitHub подтверждено.
-- Локально выполнены проверки структуры, bzip2/base64-декодирования, XML/SVG и ZIP.
-- Исполняемого Godot в рабочей среде нет. Компиляция GDScript движком, headless-запуск, экспорт APK и установка на Samsung Galaxy S24 пока не подтверждены.
-- Ручной workflow создан в default branch, потому что GitHub принимает `workflow_dispatch` только для workflow-файлов, существующих в default branch.
-- В `main` добавлен только отдельный диспетчер `.github/workflows/godot-android-dispatch.yml`; старый Android/Gradle-проект и его workflow не заменялись.
+GitHub принимает событие `workflow_dispatch` только для workflow-файла, который существует в default branch. Поэтому в `main` добавлен отдельный небольшой диспетчер, а сам Godot-проект и сборочная логика остаются в отдельной ветке. Старый Android/Gradle-проект в `main` не заменялся.
 
-## Предыдущие архивы
+## Статус и ограничения
 
-Старый `NovayaZhizn_GitHub_AutoBuild_v1.2.zip` остаётся в прежней ветке и не используется новым конвейером. Ручная загрузка Godot ZIP больше не требуется.
+- Исходники и оба workflow-файла записаны в GitHub.
+- Локально проверены ZIP, XML/SVG, соответствие путей и декодирование GDScript.
+- Первый push-run выявил, что в контейнере `barichello/godot-ci:4.3` нет `python3`; декодирование переведено на `base64 + gzip`.
+- Исполняемого Godot локально нет. Компиляция GDScript, экспорт APK и запуск на Samsung Galaxy S24 считаются подтверждёнными только после успешного GitHub Actions run и проверки на устройстве.
