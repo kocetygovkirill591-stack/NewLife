@@ -34,24 +34,16 @@ jobs:
         run: |
           set -euo pipefail
           PROJECT_DIR="$GITHUB_WORKSPACE/godot-project"
-          SOURCE_B64="$GITHUB_WORKSPACE/.github/source/main.gd.bz2.b64"
+          SOURCE_B64="$GITHUB_WORKSPACE/.github/source/main.gd.gz.b64"
           test -s "$PROJECT_DIR/project.godot" || { echo "::error::Не найден godot-project/project.godot"; exit 1; }
-          test -s "$SOURCE_B64" || { echo "::error::Не найден сжатый GDScript .github/source/main.gd.bz2.b64"; exit 1; }
+          test -s "$SOURCE_B64" || { echo "::error::Не найден сжатый GDScript .github/source/main.gd.gz.b64"; exit 1; }
 
           mkdir -p "$PROJECT_DIR/scripts"
-          python3 - "$SOURCE_B64" "$PROJECT_DIR/scripts/main.gd" <<'PY'
-          import base64
-          import bz2
-          import pathlib
-          import sys
-
-          source = pathlib.Path(sys.argv[1]).read_text(encoding="ascii").strip()
-          script = bz2.decompress(base64.b64decode(source, validate=True))
-          if b"extends Control" not in script or b"func _ready" not in script:
-              raise SystemExit("Decoded GDScript does not look like the expected main scene script")
-          pathlib.Path(sys.argv[2]).write_bytes(script)
-          print(f"Restored main.gd: {len(script)} bytes")
-          PY
+          base64 --decode "$SOURCE_B64" | gzip --decompress --stdout > "$PROJECT_DIR/scripts/main.gd"
+          test -s "$PROJECT_DIR/scripts/main.gd"
+          grep -q '^extends Control' "$PROJECT_DIR/scripts/main.gd"
+          grep -q '^func _ready' "$PROJECT_DIR/scripts/main.gd"
+          echo "Restored main.gd: $(wc -c < "$PROJECT_DIR/scripts/main.gd") bytes"
 
           for required in \
             "scripts/main.gd" \
