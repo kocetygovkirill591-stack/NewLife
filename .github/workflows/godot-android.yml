@@ -3,7 +3,7 @@ name: Новая Жизнь — Android Debug APK
 "on":
   push:
     branches:
-      - godot-v0.3.3-source-build
+      - godot-v0.3.4-employment
     paths:
       - ".github/workflows/godot-android.yml"
       - ".github/source/**"
@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Decode source, validate Godot and export APK
+    name: Decode source, validate employment and export APK
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     container:
@@ -26,7 +26,7 @@ jobs:
       - name: Checkout Godot source branch
         uses: actions/checkout@v4
         with:
-          ref: godot-v0.3.3-source-build
+          ref: godot-v0.3.4-employment
           lfs: true
 
       - name: Restore Godot source and verify project
@@ -34,17 +34,25 @@ jobs:
         run: |
           set -euo pipefail
           PROJECT_DIR="$GITHUB_WORKSPACE/godot-project"
-          SOURCE_B64="$GITHUB_WORKSPACE/.github/source/main.gd.gz.b64"
+          SOURCE_B64_PREFIX="$GITHUB_WORKSPACE/.github/source/v0.3.4/main.gd.gz.b64.part"
           test -s "$PROJECT_DIR/project.godot" || { echo "::error::Не найден godot-project/project.godot"; exit 1; }
-          test -s "$SOURCE_B64" || { echo "::error::Не найден сжатый GDScript .github/source/main.gd.gz.b64"; exit 1; }
+          test -s "${SOURCE_B64_PREFIX}00" || { echo "::error::Не найдена первая часть сжатого GDScript"; exit 1; }
+          test -s "${SOURCE_B64_PREFIX}08" || { echo "::error::Не найдена последняя часть сжатого GDScript"; exit 1; }
           test -s "$GITHUB_WORKSPACE/.github/source/export_presets.ci.cfg" || { echo "::error::Не найден CI Android Export Preset"; exit 1; }
+          PART_COUNT="$(find "$GITHUB_WORKSPACE/.github/source/v0.3.4" -maxdepth 1 -name 'main.gd.gz.b64.part*' | wc -l)"
+          test "$PART_COUNT" -eq 9 || { echo "::error::Ожидалось 9 частей GDScript, найдено $PART_COUNT"; exit 1; }
 
+          cat "${SOURCE_B64_PREFIX}"* > "$RUNNER_TEMP/main.gd.gz.b64"
           mkdir -p "$PROJECT_DIR/scripts"
-          base64 --decode "$SOURCE_B64" | gzip --decompress --stdout > "$PROJECT_DIR/scripts/main.gd"
+          base64 --decode "$RUNNER_TEMP/main.gd.gz.b64" | gzip --decompress --stdout > "$PROJECT_DIR/scripts/main.gd"
           test -s "$PROJECT_DIR/scripts/main.gd"
+          echo "953a100f20b840db88a4b73b1ff7d4cafd62a2f2c837c33f0ae62bc7b052de08  $PROJECT_DIR/scripts/main.gd" | sha256sum --check -
           grep -q '^extends Control' "$PROJECT_DIR/scripts/main.gd"
           grep -q '^func _ready' "$PROJECT_DIR/scripts/main.gd"
-          echo "Restored main.gd: $(wc -c < "$PROJECT_DIR/scripts/main.gd") bytes"
+          grep -q 'const SAVE_VERSION := 2' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Не найдена версия сейва 2"; exit 1; }
+          grep -q '^func _render_jobs' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Не найден экран вакансий"; exit 1; }
+          grep -q '^func _start_work_shift' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Не найдена механика рабочей смены"; exit 1; }
+          echo "Restored V0.3.4 main.gd: $(wc -c < "$PROJECT_DIR/scripts/main.gd") bytes"
 
           for required in \
             "scripts/main.gd" \
@@ -167,10 +175,10 @@ jobs:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH=/root/debug.keystore \
           GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey \
           GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android \
-            godot --headless --verbose --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk"
-          test -s "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk"
-          unzip -t "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk" >/dev/null
-          ls -lh "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.3-debug.apk"
+            godot --headless --verbose --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.4-debug.apk"
+          test -s "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.4-debug.apk"
+          unzip -t "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.4-debug.apk" >/dev/null
+          ls -lh "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.4-debug.apk"
 
       - name: Package editable Godot source
         shell: bash
@@ -178,21 +186,21 @@ jobs:
           set -euo pipefail
           mkdir -p "$GITHUB_WORKSPACE/build/source"
           cd "$GITHUB_WORKSPACE"
-          zip -qr "$GITHUB_WORKSPACE/build/source/NewLife-Godot-Source-V0.3.3.zip" godot-project
-          unzip -t "$GITHUB_WORKSPACE/build/source/NewLife-Godot-Source-V0.3.3.zip" >/dev/null
+          zip -qr "$GITHUB_WORKSPACE/build/source/NewLife-Godot-Source-V0.3.4.zip" godot-project
+          unzip -t "$GITHUB_WORKSPACE/build/source/NewLife-Godot-Source-V0.3.4.zip" >/dev/null
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NewLife-Android-Debug-APK-V0.3.3
-          path: build/android/NewLife-V0.3.3-debug.apk
+          name: NewLife-Android-Debug-APK-V0.3.4
+          path: build/android/NewLife-V0.3.4-debug.apk
           if-no-files-found: error
           retention-days: 14
 
       - name: Upload editable Godot source artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NewLife-Godot-Source-V0.3.3
-          path: build/source/NewLife-Godot-Source-V0.3.3.zip
+          name: NewLife-Godot-Source-V0.3.4
+          path: build/source/NewLife-Godot-Source-V0.3.4.zip
           if-no-files-found: error
           retention-days: 14
