@@ -1,0 +1,5 @@
+version=0.3.5
+base_version=0.3.3
+patch_parts=1
+main_gd_sha256=0d118abd3607742782faad24d9b143f333007721b73795d4b4eb3538273ef9fc
+patch_gzip_sha256=48b8254178db3e809cbac374d0c50efeb77c5b198ca50d459b9bea47b7717db5
