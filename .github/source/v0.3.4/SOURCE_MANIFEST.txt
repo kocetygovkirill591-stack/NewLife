@@ -1,0 +1,6 @@
+NewLife V0.3.4 source
+Encoding: gzip + base64
+Parts: main.gd.gz.b64.part00 through main.gd.gz.b64.part08
+Concatenate parts in lexical order without separators, base64-decode, then gzip-decompress to godot-project/scripts/main.gd.
+Expected restored script size: 40612 bytes.
+Expected SHA-256: 953a100f20b840db88a4b73b1ff7d4cafd62a2f2c837c33f0ae62bc7b052de08
