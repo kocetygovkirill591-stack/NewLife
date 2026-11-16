@@ -5,4 +5,4 @@ Encoding: gzip + base64; concatenate five parts without separators, base64-decod
 Restored script: godot-project/scripts/main.gd
 Restored script bytes: 40612
 Restored script SHA-256: 953a100f20b840db88a4b73b1ff7d4cafd62a2f2c837c33f0ae62bc7b052de08
-Compressed patch SHA-256: 4bfbf4f18e9a9e8bca7e3caa2b6e67e6b9e0e8e5a4b9b3e9f2a8f5b6d4c0a2b8 (see local source archive for exact patch bytes)
+Compressed patch SHA-256: 4b5b88629a35ca4c90e16c1cc7f4767958ddb461b25ffd4eaf3e581c72fb5b13 (see local source archive for exact patch bytes)
