@@ -49,6 +49,10 @@ jobs:
           mkdir -p "$PROJECT_DIR/scripts"
           base64 --decode "$SOURCE_B64" | gzip --decompress --stdout > "$PROJECT_DIR/scripts/main.gd"
           base64 --decode "$RUNNER_TEMP/main.gd.patch.gz.b64" | gzip --decompress --stdout > "$RUNNER_TEMP/main.gd.patch"
+          if ! command -v patch >/dev/null 2>&1; then
+            apt-get update -qq
+            apt-get install -y --no-install-recommends patch
+          fi
           patch -p1 -d "$GITHUB_WORKSPACE" < "$RUNNER_TEMP/main.gd.patch"
           test -s "$PROJECT_DIR/scripts/main.gd"
           echo "953a100f20b840db88a4b73b1ff7d4cafd62a2f2c837c33f0ae62bc7b052de08  $PROJECT_DIR/scripts/main.gd" | sha256sum --check -
