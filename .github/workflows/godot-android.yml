@@ -4,6 +4,7 @@ name: Новая Жизнь — Android Debug APK
   push:
     branches:
       - godot-v0.3.5-shift-window
+      - godot-v0.3.5-employment-qa
     paths:
       - ".github/workflows/godot-android.yml"
       - ".github/source/export_presets.ci.cfg"
@@ -17,7 +18,7 @@ permissions:
 
 jobs:
   build-android:
-    name: Decode source, verify shift window and export APK
+    name: Restore source, run employment tests and export APK
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     container:
@@ -27,7 +28,7 @@ jobs:
       - name: Checkout Godot source branch
         uses: actions/checkout@v4
         with:
-          ref: godot-v0.3.5-shift-window
+          ref: godot-v0.3.5-employment-qa
           lfs: true
 
       - name: Restore Godot source and verify project
@@ -169,6 +170,14 @@ jobs:
             echo "::error::Главная сцена выдала ошибку при запуске."
             exit 1
           fi
+
+      - name: Run employment regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG="$GITHUB_WORKSPACE/employment-tests.log"
+          godot --headless --path "$PROJECT_DIR" --script res://tests/test_employment_rules.gd 2>&1 | tee "$LOG"
+          grep -q "EMPLOYMENT_TESTS: PASS" "$LOG"
 
       - name: Export Android Debug APK
         shell: bash
