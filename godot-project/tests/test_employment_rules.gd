@@ -1,6 +1,7 @@
 extends SceneTree
 
 const GameScript = preload("res://scripts/main.gd")
+const EXPECTED_CHECKS := 53
 
 var checks: int = 0
 var failures: int = 0
@@ -14,11 +15,20 @@ func _run_tests() -> void:
     _test_noon_boundary()
     _test_rejected_shift_conditions()
     _test_job_application()
+    _test_job_catalog()
+    _test_all_salary_payouts()
+    _test_minimum_energy_boundary()
+    _test_invalid_job_application()
+
+    if checks != EXPECTED_CHECKS:
+        failures += 1
+        push_error("Expected %d checks, but executed %d." % [EXPECTED_CHECKS, checks])
+
     if failures == 0:
         print("EMPLOYMENT_TESTS: PASS (%d checks)" % checks)
         quit(0)
     else:
-        push_error("EMPLOYMENT_TESTS: FAIL (%d/%d failed)" % [failures, checks])
+        push_error("EMPLOYMENT_TESTS: FAIL (%d failures across %d checks)" % [failures, checks])
         quit(1)
 
 func _new_game():
@@ -68,7 +78,7 @@ func _test_normal_shift_and_daily_limit() -> void:
 
     game._start_work_shift()
     _check(game.hour == 14 and game.minute == 0 and game.day == 1, "06:00 shift ends at 14:00")
-    _check(game.money == 32200, "salary is added exactly once")
+    _check(game.money == 32200, "shop assistant salary is added exactly once")
     _check(game.energy == 65 and game.mood == 77, "shift applies expected energy and mood costs")
     _check(game.shifts_completed == 1 and game.last_shift_day == 1, "shift counters are updated")
 
@@ -129,3 +139,59 @@ func _test_job_application() -> void:
 
     game._apply_for_job("warehouse_worker")
     _check(game.current_job_id == "cafe_helper", "second job cannot replace an active job without quitting")
+    _check(game.hour == 8 and game.minute == 30, "rejected second application consumes no time")
+    _check(game.energy == 95, "rejected second application consumes no energy")
+
+func _test_job_catalog() -> void:
+    var game = _new_game()
+    var expected_salaries: Dictionary = {
+        "shop_assistant": 2200,
+        "warehouse_worker": 3000,
+        "cleaner": 1900,
+        "cafe_helper": 2400
+    }
+    for job_id in expected_salaries:
+        var job: Dictionary = game._get_job(str(job_id))
+        _check(not job.is_empty(), "%s exists in the vacancy catalog" % str(job_id))
+        _check(
+            int(job.get("salary", 0)) == int(expected_salaries[job_id]),
+            "%s has the documented salary" % str(job_id)
+        )
+
+func _test_all_salary_payouts() -> void:
+    var cases: Array[Dictionary] = [
+        {"id": "shop_assistant", "salary": 2200},
+        {"id": "warehouse_worker", "salary": 3000},
+        {"id": "cleaner", "salary": 1900},
+        {"id": "cafe_helper", "salary": 2400}
+    ]
+    for test_case in cases:
+        var game = _new_game()
+        game.current_job_id = str(test_case["id"])
+        game.hour = 8
+        game.minute = 0
+        game._start_work_shift()
+        var salary := int(test_case["salary"])
+        var job_id := str(test_case["id"])
+        _check(game.money == 30000 + salary, "%s credits the exact salary" % job_id)
+        _check(game.total_earned == salary, "%s updates lifetime earnings" % job_id)
+        _check(game.shifts_completed == 1, "%s increments the shift counter once" % job_id)
+
+func _test_minimum_energy_boundary() -> void:
+    var game = _new_game()
+    game.current_job_id = "cleaner"
+    game.hour = 8
+    game.energy = 25
+    game._start_work_shift()
+    _check(game.shifts_completed == 1, "exactly 25 energy is sufficient to start")
+    _check(game.energy == 0, "minimum-energy shift consumes 35 without going negative")
+    _check(game.money == 31900, "minimum-energy shift still pays the cleaner salary")
+
+func _test_invalid_job_application() -> void:
+    var game = _new_game()
+    game.hour = 8
+    game.minute = 10
+    game._apply_for_job("missing_job")
+    _check(game.current_job_id.is_empty(), "unknown vacancy does not assign a job")
+    _check(game.hour == 8 and game.minute == 10, "unknown vacancy consumes no interview time")
+    _check(game.energy == 100, "unknown vacancy consumes no energy")
