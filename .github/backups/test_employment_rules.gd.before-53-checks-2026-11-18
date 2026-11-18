@@ -1,0 +1,134 @@
+# Backup of godot-project/tests/test_employment_rules.gd before 53-check QA expansion
+# Original blob SHA: e3228ac710bd534a0325ba6b3244f740a8732647
+
+extends SceneTree
+
+const GameScript = preload("res://scripts/main.gd")
+
+var checks: int = 0
+var failures: int = 0
+
+func _initialize() -> void:
+    call_deferred("_run_tests")
+
+func _run_tests() -> void:
+    _test_shift_window_boundaries()
+    _test_normal_shift_and_daily_limit()
+    _test_noon_boundary()
+    _test_rejected_shift_conditions()
+    _test_job_application()
+    if failures == 0:
+        print("EMPLOYMENT_TESTS: PASS (%d checks)" % checks)
+        quit(0)
+    else:
+        push_error("EMPLOYMENT_TESTS: FAIL (%d/%d failed)" % [failures, checks])
+        quit(1)
+
+func _new_game():
+    var game = GameScript.new()
+    # Unit tests must never touch a real user:// save file.
+    game.save_locked_for_newer_version = true
+    return game
+
+func _check(condition: bool, description: String) -> void:
+    checks += 1
+    if condition:
+        print("PASS: " + description)
+    else:
+        failures += 1
+        push_error("FAIL: " + description)
+
+func _test_shift_window_boundaries() -> void:
+    var game = _new_game()
+    var cases: Array[Dictionary] = [
+        {"hour": 5, "minute": 59, "expected": false, "label": "05:59 rejected"},
+        {"hour": 6, "minute": 0, "expected": true, "label": "06:00 accepted"},
+        {"hour": 6, "minute": 1, "expected": true, "label": "06:01 accepted"},
+        {"hour": 11, "minute": 59, "expected": true, "label": "11:59 accepted"},
+        {"hour": 12, "minute": 0, "expected": true, "label": "12:00 accepted"},
+        {"hour": 12, "minute": 1, "expected": false, "label": "12:01 rejected"},
+        {"hour": 12, "minute": 59, "expected": false, "label": "12:59 rejected"},
+        {"hour": 13, "minute": 0, "expected": false, "label": "13:00 rejected"},
+        {"hour": 23, "minute": 59, "expected": false, "label": "23:59 rejected"}
+    ]
+    for test_case in cases:
+        game.hour = int(test_case["hour"])
+        game.minute = int(test_case["minute"])
+        _check(
+            game._is_work_start_time() == bool(test_case["expected"]),
+            str(test_case["label"])
+        )
+
+func _test_normal_shift_and_daily_limit() -> void:
+    var game = _new_game()
+    game.current_job_id = "shop_assistant"
+    game.day = 1
+    game.hour = 6
+    game.minute = 0
+    game.money = 30000
+    game.energy = 100
+    game.mood = 80
+
+    game._start_work_shift()
+    _check(game.hour == 14 and game.minute == 0 and game.day == 1, "06:00 shift ends at 14:00")
+    _check(game.money == 32200, "salary is added exactly once")
+    _check(game.energy == 65 and game.mood == 77, "shift applies expected energy and mood costs")
+    _check(game.shifts_completed == 1 and game.last_shift_day == 1, "shift counters are updated")
+
+    game._start_work_shift()
+    _check(game.money == 32200 and game.shifts_completed == 1, "second shift on same day is rejected")
+
+    game.day = 2
+    game.hour = 6
+    game.minute = 0
+    game._start_work_shift()
+    _check(game.money == 34400 and game.shifts_completed == 2, "next day allows one new shift")
+
+func _test_noon_boundary() -> void:
+    var game = _new_game()
+    game.current_job_id = "warehouse_worker"
+    game.day = 1
+    game.hour = 12
+    game.minute = 0
+    game.energy = 100
+    game._start_work_shift()
+    _check(game.hour == 20 and game.minute == 0, "12:00 is the final accepted start time")
+    _check(game.money == 33000, "noon shift pays the correct warehouse salary")
+
+func _test_rejected_shift_conditions() -> void:
+    var no_job = _new_game()
+    no_job.hour = 8
+    no_job._start_work_shift()
+    _check(no_job.money == 30000 and no_job.shifts_completed == 0, "shift without a job is rejected")
+
+    var late = _new_game()
+    late.current_job_id = "shop_assistant"
+    late.hour = 12
+    late.minute = 1
+    late._start_work_shift()
+    _check(late.money == 30000 and late.hour == 12 and late.minute == 1, "12:01 shift attempt changes no money or time")
+
+    var tired = _new_game()
+    tired.current_job_id = "shop_assistant"
+    tired.hour = 8
+    tired.energy = 24
+    tired._start_work_shift()
+    _check(tired.money == 30000 and tired.shifts_completed == 0, "energy below 25 rejects shift")
+
+    var unknown = _new_game()
+    unknown.current_job_id = "missing_job"
+    unknown.hour = 8
+    unknown._start_work_shift()
+    _check(unknown.money == 30000 and unknown.shifts_completed == 0, "unknown job identifier is rejected")
+
+func _test_job_application() -> void:
+    var game = _new_game()
+    game.hour = 8
+    game.minute = 0
+    game._apply_for_job("cafe_helper")
+    _check(game.current_job_id == "cafe_helper", "successful interview assigns selected job")
+    _check(game.hour == 8 and game.minute == 30, "interview consumes 30 in-game minutes")
+    _check(game.energy == 95 and game.current_screen == "work", "interview updates energy and opens work screen")
+
+    game._apply_for_job("warehouse_worker")
+    _check(game.current_job_id == "cafe_helper", "second job cannot replace an active job without quitting")
