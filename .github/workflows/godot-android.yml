@@ -177,7 +177,7 @@ jobs:
           set -euo pipefail
           LOG="$GITHUB_WORKSPACE/employment-tests.log"
           godot --headless --path "$PROJECT_DIR" --script res://tests/test_employment_rules.gd 2>&1 | tee "$LOG"
-          grep -q "EMPLOYMENT_TESTS: PASS" "$LOG"
+          grep -Fq "EMPLOYMENT_TESTS: PASS (53 checks)" "$LOG"
 
       - name: Export Android Debug APK
         shell: bash
