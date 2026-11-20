@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="500" viewBox="0 0 720 500">
+<rect width="720" height="500" fill="#e9e7d6"/><rect x="8" y="8" width="704" height="484" rx="26" fill="#e7eadb" stroke="#91a79a" stroke-width="5"/>
+<path d="M612 -10L584 94L624 168L585 250L630 335L598 510H720V-10Z" fill="#9bc8d4"/><path d="M605 0L580 90L620 165L580 248L625 336L592 500" fill="none" stroke="#6caab9" stroke-width="9"/>
+<path d="M20 115H700M20 220H700M20 305H700M20 390H700M125 18L160 482M255 18L295 482M420 18L455 482M520 18L545 482" fill="none" stroke="#b4b09e" stroke-width="19"/>
+<path d="M20 115H700M20 220H700M20 305H700M20 390H700M125 18L160 482M255 18L295 482M420 18L455 482M520 18L545 482" fill="none" stroke="#f8f3df" stroke-width="12"/>
+<path d="M28 130H700M28 236H700M28 322H700M28 406H700M142 20L177 482M272 20L312 482M437 20L472 482M537 20L562 482" fill="none" stroke="#d4cfba" stroke-width="2" stroke-dasharray="14 10"/>
+<path d="M28 35H250V105H28Z" fill="#d9e4dc"/><g fill="#aeb7ad" stroke="#777f78" stroke-width="3"><rect x="35" y="50" width="72" height="48" rx="7"/><rect x="132" y="45" width="78" height="53" rx="7"/><rect x="215" y="42" width="30" height="56" rx="5"/></g><g fill="#78a6ae"><path d="M48 62h12v12H48zm22 0h12v12H70zm22 0h8v12h-8zM145 57h12v12h-12zm24 0h12v12h-12zm24 0h10v12h-10z"/></g>
+<g fill="#c6bda4" stroke="#857e6d" stroke-width="3"><rect x="310" y="40" width="82" height="62" rx="8"/><rect x="405" y="47" width="74" height="54" rx="8"/><rect x="490" y="35" width="67" height="66" rx="8"/></g>
+<path d="M250 140H500V214H250Z" fill="#e3dfcc"/><g fill="#9da9a4" stroke="#6c7c79" stroke-width="3"><rect x="285" y="145" width="66" height="55" rx="8"/><rect x="375" y="148" width="88" height="50" rx="8"/></g>
+<path d="M250 235H490V310H250Z" fill="#deddea"/><g fill="#aab2bb" stroke="#6f7884" stroke-width="3"><rect x="285" y="242" width="76" height="56" rx="8"/><rect x="390" y="245" width="75" height="52" rx="8"/></g>
+<path d="M20 330H250V475H20Z" fill="#d9e1d9"/><g fill="#b5b4a6" stroke="#777e76" stroke-width="3"><rect x="38" y="346" width="75" height="52" rx="5"/><rect x="135" y="352" width="83" height="60" rx="5"/><rect x="42" y="420" width="75" height="42" rx="5"/></g>
+<path d="M485 300L610 260L700 295V485H490Z" fill="#a7c99b"/><path d="M505 320L675 445M540 300L560 470M500 395L690 355" fill="none" stroke="#e8e2c8" stroke-width="11"/><g fill="#6f9c70" stroke="#507d5b" stroke-width="3"><circle cx="515" cy="340" r="16"/><circle cx="575" cy="315" r="18"/><circle cx="645" cy="325" r="16"/><circle cx="610" cy="400" r="18"/><circle cx="675" cy="455" r="15"/><circle cx="530" cy="455" r="15"/></g>
+<rect x="24" y="18" width="214" height="38" rx="13" fill="#233c45"/><text x="38" y="45" font-family="DejaVu Sans,sans-serif" font-size="22" font-weight="700" fill="#fff">БЕРЁЗОВСК</text>
+<g font-family="DejaVu Sans,sans-serif" font-size="14" font-weight="700" text-anchor="middle" fill="#334a4a">
+<rect x="34" y="72" width="120" height="36" rx="13" fill="#f7f4e7" stroke="#9ba999" stroke-width="2"/><text x="94" y="96">ЖИЛОЙ</text>
+<rect x="300" y="80" width="132" height="36" rx="13" fill="#f7f4e7" stroke="#9ba999" stroke-width="2"/><text x="366" y="104">ТОРГОВЫЙ</text>
+<rect x="275" y="158" width="105" height="36" rx="13" fill="#f7f4e7" stroke="#9ba999" stroke-width="2"/><text x="327" y="182">ЦЕНТР</text>
+<rect x="285" y="230" width="136" height="36" rx="13" fill="#f7f4e7" stroke="#9ba999" stroke-width="2"/><text x="353" y="254">ДЕЛОВОЙ</text>
+<rect x="40" y="330" width="145" height="36" rx="13" fill="#f7f4e7" stroke="#9ba999" stroke-width="2"/><text x="112" y="354">ПРОМЫШЛЕННЫЙ</text>
+<rect x="495" y="390" width="165" height="36" rx="13" fill="#f7f4e7" stroke="#9ba999" stroke-width="2"/><text x="577" y="414">ПАРКОВЫЙ</text></g>
+<circle cx="674" cy="48" r="25" fill="#f8f5e8" stroke="#9ba999" stroke-width="2"/><path d="M674 28L666 57L674 51L682 57Z" fill="#416f7a"/><text x="674" y="23" text-anchor="middle" font-family="sans-serif" font-size="12" font-weight="700" fill="#40565b">N</text>
+</svg>
