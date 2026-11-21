@@ -1,0 +1,225 @@
+name: Новая Жизнь — Android Debug APK
+
+"on":
+  push:
+    branches:
+      - godot-v0.3.5-shift-window
+      - godot-v0.3.5-employment-qa
+    paths:
+      - ".github/workflows/godot-android.yml"
+      - ".github/source/export_presets.ci.cfg"
+      - "build-sources/v0.3.5/**"
+      - "godot-project/**"
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build-android:
+    name: Restore source, run employment tests and export APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container:
+      image: barichello/godot-ci:4.3
+
+    steps:
+      - name: Checkout Godot source branch
+        uses: actions/checkout@v4
+        with:
+          ref: godot-v0.3.5-employment-qa
+          lfs: true
+
+      - name: Restore Godot source and verify project
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT_DIR="$GITHUB_WORKSPACE/godot-project"
+          SOURCE_B64="$GITHUB_WORKSPACE/.github/source/main.gd.gz.b64"
+          PATCH_B64_PREFIX="$GITHUB_WORKSPACE/build-sources/v0.3.5/main.gd.patch.gz.b64.part"
+          test -s "$PROJECT_DIR/project.godot" || { echo "::error::Не найден godot-project/project.godot"; exit 1; }
+          test -s "$SOURCE_B64" || { echo "::error::Не найден проверенный базовый GDScript V0.3.3"; exit 1; }
+          test -s "${PATCH_B64_PREFIX}00" || { echo "::error::Не найдена часть патча V0.3.5"; exit 1; }
+          test -s "$GITHUB_WORKSPACE/.github/source/export_presets.ci.cfg" || { echo "::error::Не найден CI Android Export Preset"; exit 1; }
+          PART_COUNT="$(find "$GITHUB_WORKSPACE/build-sources/v0.3.5" -maxdepth 1 -name 'main.gd.patch.gz.b64.part*' | wc -l)"
+          test "$PART_COUNT" -eq 1 || { echo "::error::Ожидалась 1 часть патча, найдено $PART_COUNT"; exit 1; }
+
+          cat "${PATCH_B64_PREFIX}"* > "$RUNNER_TEMP/main.gd.patch.gz.b64"
+          mkdir -p "$PROJECT_DIR/scripts"
+          base64 --decode "$SOURCE_B64" | gzip --decompress --stdout > "$PROJECT_DIR/scripts/main.gd"
+          base64 --decode "$RUNNER_TEMP/main.gd.patch.gz.b64" | gzip --decompress --stdout > "$RUNNER_TEMP/main.gd.patch"
+          if ! command -v patch >/dev/null 2>&1; then
+            apt-get update -qq
+            apt-get install -y --no-install-recommends patch
+          fi
+          patch -p1 -d "$GITHUB_WORKSPACE" < "$RUNNER_TEMP/main.gd.patch"
+          test -s "$PROJECT_DIR/scripts/main.gd"
+          echo "0d118abd3607742782faad24d9b143f333007721b73795d4b4eb3538273ef9fc  $PROJECT_DIR/scripts/main.gd" | sha256sum --check -
+          grep -q '^extends Control' "$PROJECT_DIR/scripts/main.gd"
+          grep -q '^func _ready' "$PROJECT_DIR/scripts/main.gd"
+          grep -q 'const SAVE_VERSION := 2' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Не найдена версия сейва 2"; exit 1; }
+          grep -q '^func _render_jobs' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Не найден экран вакансий"; exit 1; }
+          grep -q '^func _start_work_shift' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Не найдена механика рабочей смены"; exit 1; }
+          grep -q '^func _is_work_start_time' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Не найдена единая проверка времени смены"; exit 1; }
+          grep -q 'current_time_minutes >= 360 and current_time_minutes <= 720' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Неверные границы времени смены"; exit 1; }
+          echo "Restored V0.3.5 main.gd: $(wc -c < "$PROJECT_DIR/scripts/main.gd") bytes"
+
+          for required in \
+            "scripts/main.gd" \
+            "scenes/Main.tscn" \
+            "assets/city_map.svg" \
+            "assets/apartment.svg" \
+            "export_presets.cfg"; do
+            test -s "$PROJECT_DIR/$required" || { echo "::error::В Godot-проекте отсутствует $required"; exit 1; }
+          done
+          grep -q 'name="Android Debug"' "$PROJECT_DIR/export_presets.cfg" || { echo "::error::Не найден preset Android Debug"; exit 1; }
+          grep -q 'res://assets/city_map.svg' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Скрипт не ссылается на SVG-карту"; exit 1; }
+          grep -q 'res://assets/apartment.svg' "$PROJECT_DIR/scripts/main.gd" || { echo "::error::Скрипт не ссылается на SVG-квартиру"; exit 1; }
+
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "Godot source restored from repository text files."
+
+      - name: Prepare Godot 4.3 Android environment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.config" "$HOME/.local/share/godot/export_templates"
+          if [ "$HOME" != "/root" ]; then
+            if [ -d /root/.config/godot ]; then
+              mkdir -p "$HOME/.config/godot"
+              cp -a /root/.config/godot/. "$HOME/.config/godot/"
+            fi
+            if [ -d /root/.local/share/godot/export_templates/4.3.stable ]; then
+              mkdir -p "$HOME/.local/share/godot/export_templates/4.3.stable"
+              cp -a /root/.local/share/godot/export_templates/4.3.stable/. "$HOME/.local/share/godot/export_templates/4.3.stable/"
+            fi
+          fi
+
+          GODOT_VERSION="$(godot --version)"
+          echo "Godot: $GODOT_VERSION"
+          case "$GODOT_VERSION" in
+            4.3*) ;;
+            *) echo "::error::Ожидался Godot 4.3, получен $GODOT_VERSION"; exit 1 ;;
+          esac
+
+          java -version
+          test -f /root/debug.keystore || { echo "::error::В контейнере отсутствует debug.keystore"; exit 1; }
+          export ANDROID_SDK_ROOT="$ANDROID_HOME"
+          yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses >/dev/null 2>&1 || true
+          sdkmanager --sdk_root="$ANDROID_HOME" \
+            "cmdline-tools;latest" \
+            "platform-tools" \
+            "build-tools;34.0.0" \
+            "platforms;android-34" \
+            "cmake;3.10.2.4988404" \
+            "ndk;23.2.8568313"
+
+          # Godot stores Android SDK/JDK locations in per-user EditorSettings,
+          # not in the project. The CI container HOME is /github/home, so write
+          # an explicit settings file there instead of relying on /root defaults.
+          export JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+          export ANDROID_HOME="/usr/lib/android-sdk"
+          mkdir -p "$HOME/.config/godot" "$HOME/.local/share/godot/export_templates/4.3.stable"
+          if [ -d /root/.local/share/godot/export_templates/4.3.stable ]; then
+            cp -a /root/.local/share/godot/export_templates/4.3.stable/. "$HOME/.local/share/godot/export_templates/4.3.stable/"
+          fi
+          cat > "$HOME/.config/godot/editor_settings-4.3.tres" <<'SETTINGS'
+          [gd_resource type="EditorSettings" format=3]
+
+          [resource]
+          export/android/java_sdk_path = "/usr/lib/jvm/java-17-openjdk-amd64"
+          export/android/android_sdk_path = "/usr/lib/android-sdk"
+          export/android/debug_keystore = "/root/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          SETTINGS
+
+          test -x "$JAVA_HOME/bin/java"
+          test -x "$ANDROID_HOME/platform-tools/adb"
+          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          test -x "$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$ANDROID_HOME" >> "$GITHUB_ENV"
+          echo "$JAVA_HOME/bin" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          test -s "$HOME/.local/share/godot/export_templates/4.3.stable/android_debug.apk"
+          test -s "$HOME/.local/share/godot/export_templates/4.3.stable/android_release.apk"
+          echo "Godot EditorSettings and Android templates are configured."
+
+      - name: Import resources and validate scripts
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG="$GITHUB_WORKSPACE/godot-import.log"
+          godot --headless --path "$PROJECT_DIR" --editor --quit --verbose 2>&1 | tee "$LOG"
+          if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script' "$LOG"; then
+            echo "::error::Godot сообщил об ошибке GDScript или загрузки скрипта."
+            exit 1
+          fi
+
+      - name: Run a short headless startup test
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG="$GITHUB_WORKSPACE/godot-smoke-test.log"
+          godot --headless --path "$PROJECT_DIR" --quit-after 3 --verbose 2>&1 | tee "$LOG"
+          if grep -Eq 'SCRIPT ERROR:|Parse Error:|Failed to load script' "$LOG"; then
+            echo "::error::Главная сцена выдала ошибку при запуске."
+            exit 1
+          fi
+
+      - name: Run employment regression tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOG="$GITHUB_WORKSPACE/employment-tests.log"
+          godot --headless --path "$PROJECT_DIR" --script res://tests/test_employment_rules.gd 2>&1 | tee "$LOG"
+          grep -Fq "EMPLOYMENT_TESTS: PASS (53 checks)" "$LOG"
+
+      - name: Export Android Debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/build/android"
+          LOCAL_PRESET="$RUNNER_TEMP/export_presets.local.cfg"
+          cp "$PROJECT_DIR/export_presets.cfg" "$LOCAL_PRESET"
+          restore_preset() { cp "$LOCAL_PRESET" "$PROJECT_DIR/export_presets.cfg"; }
+          trap restore_preset EXIT
+          sed "s|__HOME__|$HOME|g" "$GITHUB_WORKSPACE/.github/source/export_presets.ci.cfg" > "$PROJECT_DIR/export_presets.cfg"
+          grep -q 'keystore/debug="/root/debug.keystore"' "$PROJECT_DIR/export_presets.cfg"
+          grep -q 'custom_template/debug=' "$PROJECT_DIR/export_presets.cfg"
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH=/root/debug.keystore \
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER=androiddebugkey \
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD=android \
+            godot --headless --verbose --path "$PROJECT_DIR" --export-debug "Android Debug" "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.5-debug.apk"
+          test -s "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.5-debug.apk"
+          unzip -t "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.5-debug.apk" >/dev/null
+          ls -lh "$GITHUB_WORKSPACE/build/android/NewLife-V0.3.5-debug.apk"
+
+      - name: Package editable Godot source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$GITHUB_WORKSPACE/build/source"
+          cd "$GITHUB_WORKSPACE"
+          zip -qr "$GITHUB_WORKSPACE/build/source/NewLife-Godot-Source-V0.3.5.zip" godot-project
+          unzip -t "$GITHUB_WORKSPACE/build/source/NewLife-Godot-Source-V0.3.5.zip" >/dev/null
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NewLife-Android-Debug-APK-V0.3.5
+          path: build/android/NewLife-V0.3.5-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload editable Godot source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: NewLife-Godot-Source-V0.3.5
+          path: build/source/NewLife-Godot-Source-V0.3.5.zip
+          if-no-files-found: error
+          retention-days: 14
