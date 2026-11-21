@@ -7,6 +7,7 @@ name: Новая Жизнь — Android Debug APK
       - godot-v0.3.5-employment-qa
     paths:
       - ".github/workflows/godot-android.yml"
+      - ".github/scripts/**"
       - ".github/source/export_presets.ci.cfg"
       - "build-sources/v0.3.5/**"
       - "godot-project/**"
@@ -79,6 +80,12 @@ jobs:
 
           echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "Godot source restored from repository text files."
+
+      - name: Check six city-map labels against touch areas
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 .github/scripts/check_city_map_hotspots.py "$GITHUB_WORKSPACE/godot-project"
 
       - name: Prepare Godot 4.3 Android environment
         shell: bash
